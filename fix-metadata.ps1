@@ -12,8 +12,26 @@ $mp3_files = Get-ChildItem $directory*.mp3
     # UI
 $bar_length = 50
     # Parameters
-$last_date_modified = "2025-02-06"
+$last_date_modified = "2025-03-29"
 $testing = $false
+
+function Get-ToDoList {
+    param (
+        $Files,
+        $LastDateModified
+    )
+
+    $todo_list = @()
+
+    foreach ($file in $Files)
+    {
+        $file_modified_date = $file.LastWriteTime.ToString("yyyy-MM-dd")
+        if((get-date $file_modified_date) -gt (get-date $LastDateModified)) {
+            $todo_list += $file
+        }  
+    }
+    return $todo_list
+}
 
 # Functions
 function Get-Artist {
@@ -54,41 +72,7 @@ function Get-Bar {
     return "*" * $bar_complete_length + " " * $bar_incomplete_length
 }
 
-function Get-ToDoList {
-    param (
-        $FileList,
-        $LastDateModified
-    )
 
-    $todo_list = @()
-
-    for ($index = 0; $index -lt $FileList.count; $index++) {
-    
-        Clear-Host
-
-        # Progress bar
-        $bar = Get-Bar -CurrentPosition $index -ListSize $FileList.count
-        $nr = $index + 1
-
-        Write-Host "File [$nr/$($FileList.count)] [$bar]"
-
-        # Check file
-        $file = $FileList[$index]
-        Write-Host "Checking $file"
-
-        # If the dates differ, the file needs to be updated
-        $file_modified = $file.LastWriteTime.ToString("yyyy-MM-dd")
-
-
-        if($file_modified -ne $LastDateModified) {
-
-            $todo_list += $file
-        }  
-    }
-
-    write-host $todo_list
-    return $todo_list
-}
 
 function Set-Data {
     param (
@@ -120,7 +104,7 @@ function Set-Data {
 # Code
 if(!$testing) {
 
-    $todo_list = Get-ToDoList -FileList $mp3_files -LastDateModified $last_date_modified
+    $todo_list = Get-ToDoList -Files $mp3_files -LastDateModified $last_date_modified
     $todo_list | Format-Table -Property Name
 
     $continue = $Host.UI.PromptForChoice("The $($todo_list.count) files above will be modified","Do you want to continue?", $('&Yes', '&No'), 1)
